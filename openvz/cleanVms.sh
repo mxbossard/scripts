@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash 
 
 #set -x
 
@@ -51,11 +51,11 @@ function secureCt {
 	$VZCTL_CMD exec $ctId 'passwd -l root'
 
 	#Remove other execution on some binaries
-	$VZCTL_CMD exec $ctId 'chmod o-x /usr/bin/gcc*'
-	$VZCTL_CMD exec $ctId 'chmod o-x /usr/bin/make'
-	$VZCTL_CMD exec $ctId 'chmod o-x /usr/bin/apt-get'
-	$VZCTL_CMD exec $ctId 'chmod o-x /usr/bin/aptitude'
-	$VZCTL_CMD exec $ctId 'chmod o-x /usr/bin/dpkg'
+	$VZCTL_CMD exec $ctId 'test -f /usr/bin/gcc && chmod o-x /usr/bin/gcc'
+	$VZCTL_CMD exec $ctId 'test -f /usr/bin/make && chmod o-x /usr/bin/make'
+	$VZCTL_CMD exec $ctId 'test -f /usr/bin/apt-get && chmod o-x /usr/bin/apt-get'
+	$VZCTL_CMD exec $ctId 'test -f /usr/bin/aptitude && chmod o-x /usr/bin/aptitude'
+	$VZCTL_CMD exec $ctId 'test -f /usr/bin/dpkg && chmod o-x /usr/bin/dpkg'
 
 }
 
