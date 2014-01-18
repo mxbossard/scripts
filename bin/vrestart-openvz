@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Restart an openvz CT
+CMD="vzctl restart"
+$CMD $1
