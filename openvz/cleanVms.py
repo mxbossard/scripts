@@ -6,8 +6,9 @@ import subprocess
 IGNORED_CTS = [30000]
 
 VZCTL = "/usr/sbin/vzctl"
+VZLIST = "/usr/sbin/vzlist"
 
-EXEC = " exec2 "
+EXEC = "exec2"
 
 # Fn wich init a CT setup
 def initCtSetup( ctId ):
@@ -66,15 +67,29 @@ def getCtListToClean():
     ctList = []
     
     # All CTs  
-    p = subprocess.call(VZLIST + " -a1", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen([VZLIST, "-a1"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #output = subprocess.check_output(VZLIST + " -a1 | tr -d ' '", stderr=subprocess.STDOUT)
+    #output = os.popen(VZLIST + " -a1 | tr -d ' '")
+    #output = os.popen(VZLIST + " -a1")
     (output, err) = p.communicate()
-    
-    for id in output:
-        ctList.add(id)
 
-    ctList.removeAll(IGNORED_CTS)
-    
-    return ctList
+#    print output.split("\n")
 
-    print(getCtListToClean())
+#    while (id = output.readLine()) != '':
+#        print id.strip()
+
+    allIds = output.split("\n")
+
+    for id in allIds:
+        id = id.strip()
+        print "id: %s" % id
+        id = int(id)
+        print "id: #%d" % id
+        if (IGNORED_CTS.count(id) == 0):
+        	ctList.append(id)
+    
+	return ctList
+
+
+print(getCtListToClean())
 
