@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import os
 import subprocess
 
 IGNORED_CTS = [30000]
@@ -67,28 +66,19 @@ def getCtListToClean():
     ctList = []
     
     # All CTs  
-    p = subprocess.Popen([VZLIST, "-a1"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #output = subprocess.check_output(VZLIST + " -a1 | tr -d ' '", stderr=subprocess.STDOUT)
-    #output = os.popen(VZLIST + " -a1 | tr -d ' '")
-    #output = os.popen(VZLIST + " -a1")
-    (output, err) = p.communicate()
-
-#    print output.split("\n")
-
-#    while (id = output.readLine()) != '':
-#        print id.strip()
-
+    output = subprocess.check_output([VZLIST, "-a1"], stderr=subprocess.STDOUT)
     allIds = output.split("\n")
 
     for id in allIds:
         id = id.strip()
-        print "id: %s" % id
-        id = int(id)
-        print "id: #%d" % id
-        if (IGNORED_CTS.count(id) == 0):
-        	ctList.append(id)
+        try:
+            id = int(id)
+            if (IGNORED_CTS.count(id) == 0):
+                ctList.append(id)
+        except:
+            pass
     
-	return ctList
+    return ctList
 
 
 print(getCtListToClean())
