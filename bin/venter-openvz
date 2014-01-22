@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Enter an openvz CT
+CMD="vzctl enter"
+$CMD $1
