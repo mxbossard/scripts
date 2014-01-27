@@ -180,9 +180,8 @@ print "Start OpenVz cleaner tool on %s" % now
 ctToClean = getCtListToClean()
 
 #for ctId in ctToClean:
-#    clean(ctId)
+clean(ctId)
 
-clean(100)
 mailReport(buildReport())
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
