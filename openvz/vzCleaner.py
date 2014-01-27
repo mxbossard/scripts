@@ -179,8 +179,8 @@ print "Start OpenVz cleaner tool on %s" % now
 
 ctToClean = getCtListToClean()
 
-#for ctId in ctToClean:
-clean(ctId)
+for ctId in ctToClean:
+    clean(ctId)
 
 mailReport(buildReport())
 
