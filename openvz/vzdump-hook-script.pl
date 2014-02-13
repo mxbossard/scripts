@@ -10,9 +10,11 @@ print "HOOK: " . join (' ', @ARGV) . "\n";
 # Time the snapshots are keep on remote in minutes
 my $ftp_minutes_time_length = (1.5 * 60 * 24);
 
+# Mount point
+my $mountPoint = "/mnt/ftpBackup";
+
 # Remote snapshot dir
-my $snapshotsDir = "/mnt/ftpBackup/backup";
-#my $snapshotsDir = "/tmp";
+my $snapshotsDir = "$mountPoint/backup";
 
 my $phase = shift;
 my $mode = shift; # stop/suspend/snapshot
@@ -37,7 +39,7 @@ my %dispatch = (
 
 sub copyUpload {
         my $file = shift;
-        print "HOOK: uploading " . $file . " to mount point " . $snapshotsDir . " ...\n";
+        print "HOOK: uploading " . $file . " to directory " . $snapshotsDir . " ...\n";
 
         # try it twice
         system("touch $snapshotsDir/\$(basename $file)") == 0 &&
@@ -59,7 +61,16 @@ sub nop {
         # nothing
 }
 
+sub remount {
+        # remount the mount point
+	system("umount $mountPoint ; sleep 1 ; mount $mountPoint") == 0 || die "Unable to remount mount point !";
+
+	print "Mount Point remounted\n";
+}
+
 sub backup_end {
+	remount();
+
         copyUpload($tarfile);
 	cleanOldBackup();
 }
