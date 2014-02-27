@@ -88,7 +88,6 @@ public final class TestSsl {
 			this.connectionTimeout = connectionTimeout;
 		}
 
-		@Override
 		public Boolean call() throws Exception {
 			HttpURLConnection connection = null;
 			BufferedReader in = null;
