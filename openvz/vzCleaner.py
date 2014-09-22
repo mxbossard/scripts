@@ -9,7 +9,7 @@ from datetime import datetime, date, time
 
 
 # ----- Configuration -----
-IGNORED_CTS = [30000]
+IGNORED_CTS = [30000,31000]
 RCPT_EMAIL = "root@mby.net"
 FROM_EMAIL = "root@mby.net"
 
@@ -109,16 +109,29 @@ def outputVzCmd( ctId, cmd ):
 # Fn which retrieve all CT Ids to process
 def getCtListToClean():
     ctList = []
+    stoppedCtList = []
 
     # All CTs  
     output = subprocess.check_output([VZLIST, "-a1"], stderr=subprocess.STDOUT)
     allIds = output.split("\n")
 
+    # Stopped CTs
+    stoppedOut = subprocess.check_output([VZLIST, "-S1"], stderr=subprocess.STDOUT)
+    stoppedIds = stoppedOut.split("\n")
+    for id in stoppedIds:
+        id = id.strip()
+        try:
+            id = int(id)
+            stoppedCtList.append(id)
+        except:
+            pass
+   
+    # Build the CT list to clean
     for id in allIds:
         id = id.strip()
         try:
             id = int(id)
-            if (IGNORED_CTS.count(id) == 0):
+            if (IGNORED_CTS.count(id) == 0 and stoppedCtList.count(id) == 0):
                 ctList.append(id)
         except:
             pass
@@ -178,6 +191,7 @@ now = datetime.now().strftime("%A, %d. %B %Y %H:%M")
 print "Start OpenVz cleaner tool on %s" % now
 
 ctToClean = getCtListToClean()
+print "The cleaner tool will work on %s" % ctToClean
 
 for ctId in ctToClean:
     clean(ctId)

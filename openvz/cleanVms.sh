@@ -65,11 +65,12 @@ do
 	ctId=$(basename $ctDir)
 
 	# Test if CT is running	
-	isCtUp=$($VZCTL_CMD status $ctId | grep "running" | wc -l)
+	isCtUp=$($VZCTL_CMD status $ctId | grep "running" | grep -v "suspended" | wc -l)
 	if [ "$isCtUp" -eq "1" ]
 	then
 
 		echo "------------ Processing CT #$ctId ... ----------"
+		echo "CT status: $($VZCTL_CMD status $ctId)"
 
 		$VZCTL_CMD exec $ctId 'df -h /'
 
