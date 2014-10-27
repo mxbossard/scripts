@@ -1,4 +1,4 @@
 #!/bin/sh
 
-exiftool -Comment="Copyright Maxime BOSSARD" -Copyright "Copyright Maxime BOSSARD" *.jpg
+exiftool -P -comment="Copyright Maxime BOSSARD" -copyright="Copyright Maxime BOSSARD" *.jpg
 
