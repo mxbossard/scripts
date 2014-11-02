@@ -6,10 +6,9 @@ import subprocess
 from datetime import datetime, date, time
 import re
 
-CONFIG_FILE="sample.cfg"
+CONFIG_FILE = "sample.cfg"
 
-IPT_CMD="/sbin/iptables"
-DNAT_SECTION="dnat"
+IPT_CMD = "/sbin/iptables"
 
 # Fn which exec a command
 def execCmd( cmd ):
@@ -27,6 +26,8 @@ def addDNatRule (  ):
 	print "foo"
 
 class AbstractRule:
+	_name=""
+	_chain=""
 	_prot=""
 	_srcIface=""
 	_srcIp=""
@@ -35,7 +36,12 @@ class AbstractRule:
 	_dstIp=""
 	_dstPort=""
 
-	def map(self, section, config, ruleName):
+	@classmethod
+	def map(self, config, section, ruleName):
+		self._name = ruleName
+
+		if config.has_option(section, ruleName + ".chain"):
+			self._chain = config.get(section, ruleName + ".chain")
 		if config.has_option(section, ruleName + ".prot"):
 			self._prot = config.get(section, ruleName + ".prot")
 		if config.has_option(section, ruleName + ".src.iface"):
@@ -51,6 +57,7 @@ class AbstractRule:
 		if config.has_option(section, ruleName + ".dst.port"):
 			self._dstPort = config.get(section, ruleName + ".dst.port")
 
+        @classmethod
 	def getMatchOpt(self):
 		matchOpt = ""
 
@@ -62,18 +69,84 @@ class AbstractRule:
 
 		return matchOpt
 
+        @classmethod
 	def iptablesRule(self):
 		raise Exception("Need to override iptablesRule() !")
+	
+        @classmethod
+	def appendIptablesRule(self):
+                return "%s -A %s %s" % (IPT_CMD, self._chain, self.iptablesRule())
+
+        @classmethod
+	def insertIptablesRule(self, index):
+                return "%s -I %s %d %s" % (IPT_CMD, self._chain, index, self.iptablesRule())
+
+        @classmethod
+        def delIptablesRule(self):
+                return "%s -D %s %s" % (IPT_CMD, self._chain, self.iptablesRule())
+
+class FilterRule(AbstractRule):
+	_target=""
+
+        @classmethod
+	def map(self, config, section, ruleName):
+		AbstractRule.map(config, section, ruleName)
+		target = config.has_option(section, ruleName + ".target")
+		if target:
+			self._dnatDst = target
+
+        @classmethod
+	def iptablesRule(self):
+		target=""
+                prot=""
+                srcIp=""
+                srcPort=""
+                srcIface=""
+                dstIp=""
+                dstPort=""
+                dstIface=""
+
+                if (not self._chain):
+                        raise Exception("Chain need to be set in filter rule %s !" % self._name)
+                if (not self._target):
+                        raise Exception("Target need to be set in filter rule %s !" % self._name)
+
+                if (self._target):
+                        target = "-j %s" % self._target
+                if (self._prot):
+                        srcIp = "-p %s" % self._prot
+                if (self._srcIp):
+                        srcIp = "-s %s" % self._srcIp
+                if (self._srcPort):
+                        srcPort = "--sport %s" % self._srcPort
+                if (self._srcIface):
+                        srcIface = "-i %s" % self._srcIface
+                if (self._dstIp):
+                        dstIp = "-d %s" % self._dstIp
+                if (self._dstPort):
+                        dstPort = "--dport %s" % self._dstPort
+                if (self._dstIface):
+			dstIface = "-o %s" % self._dstIface
+
+                rule = "-t nat -j DNAT %s %s %s %s %s %s %s %s %s" % (prot, self.getMatchOpt(), srcIp, srcPort, srcIface, dstIp, dstPort, dstIface, target)
+                rule = re.sub(' +', ' ', rule)
+
+                return rule
+
 
 
 class DnatRule(AbstractRule):
+	_chain="PREROUTING"
 	_dnatDst=""
 	
-	def map(self, config, ruleName):
-		AbstractRule.map(self, DNAT_SECTION, config, ruleName)
-		if config.has_option(DNAT_SECTION, ruleName + ".dnat.dst"):
-			self._dnatDst = config.get(DNAT_SECTION, ruleName + ".dnat.dst")
+        @classmethod
+	def map(self, config, section, ruleName):
+		AbstractRule.map(config, section, ruleName)
+		dst = config.has_option(section, ruleName + ".dnat.dst")
+		if dst:
+			self._dnatDst = dst
 
+        @classmethod
 	def iptablesRule(self):
 		prot=""
 		srcIp=""
@@ -84,7 +157,7 @@ class DnatRule(AbstractRule):
 		dstIface=""
 
 		if (not self._dnatDst):
-			raise Exception("DNAT destination need to be set !")
+			raise Exception("DNAT destination need to be set in dnat rule: %s !" % self._name)
 
 		if (self._prot):
 			srcIp = "-p %s" % self._prot
@@ -101,16 +174,11 @@ class DnatRule(AbstractRule):
 		if (self._dstIface):
 			dstIface = "-o %s" % self._dstIface
 			
-		rule = "-t nat -j DNAT %s %s %s %s %s %s %s %s --to-destination %s" % (prot, self.getMatchOpt(), srcIp, srcPort, srcIface, dstIp, dstPort, dstIface, self._dnatDst)
+		rule = "-t nat -j DNAT %s %s %s %s %s %s %s %s" % (prot, self.getMatchOpt(), srcIp, srcPort, srcIface, dstIp, dstPort, dstIface)
 		rule = re.sub(' +', ' ', rule)
 
 		return rule
 
-	def appendIptablesRule(self):
-		return "%s %s %s" % (IPT_CMD, "-A PREROUTING", self.iptablesRule())
-
-	def delIptablesRule(self):
-		return "%s %s %s" % (IPT_CMD, "-D PREROUTING", self.iptablesRule())	
 
 
 def parseRulesNames (config, section):
@@ -127,21 +195,27 @@ def parseRulesNames (config, section):
 	return rulesNames
 
 
+SECTIONS_CONFIG = {"dnat" : DnatRule, "filter" : FilterRule}
+
 config = ConfigParser.SafeConfigParser()
 config.read(CONFIG_FILE)
 
-dnatRulesNames = parseRulesNames(config, DNAT_SECTION)
+rules = []
 
-dnatRules = []
-for ruleName in dnatRulesNames:
-	rule = DnatRule()
-	rule.map(config, ruleName)
-	dnatRules.append(rule)
+for section, ruleType in SECTIONS_CONFIG.iteritems():
+
+	rulesNames = parseRulesNames(config, section)
+
+	for ruleName in rulesNames:
+		rule = ruleType()
+		rule.map(config, section, ruleName)
+		rules.append(rule)
 
 
-for dnatRule in dnatRules:
-	print dnatRule.delIptablesRule()
-	print dnatRule.appendIptablesRule()
+for rule in rules:
+	print rule.delIptablesRule()
+	print rule.appendIptablesRule()
+	print rule.insertIptablesRule(1)
 
 
 
