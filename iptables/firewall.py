@@ -36,7 +36,6 @@ class AbstractRule:
 	_dstIp=""
 	_dstPort=""
 
-	@classmethod
 	def map(self, config, section, ruleName):
 		self._name = ruleName
 
@@ -57,7 +56,6 @@ class AbstractRule:
 		if config.has_option(section, ruleName + ".dst.port"):
 			self._dstPort = config.get(section, ruleName + ".dst.port")
 
-        @classmethod
 	def getMatchOpt(self):
 		matchOpt = ""
 
@@ -69,33 +67,27 @@ class AbstractRule:
 
 		return matchOpt
 
-        @classmethod
 	def iptablesRule(self):
 		raise Exception("Need to override iptablesRule() !")
 	
-        @classmethod
 	def appendIptablesRule(self):
                 return "%s -A %s %s" % (IPT_CMD, self._chain, self.iptablesRule())
 
-        @classmethod
 	def insertIptablesRule(self, index):
                 return "%s -I %s %d %s" % (IPT_CMD, self._chain, index, self.iptablesRule())
 
-        @classmethod
         def delIptablesRule(self):
                 return "%s -D %s %s" % (IPT_CMD, self._chain, self.iptablesRule())
 
 class FilterRule(AbstractRule):
 	_target=""
 
-        @classmethod
 	def map(self, config, section, ruleName):
-		AbstractRule.map(config, section, ruleName)
-		target = config.has_option(section, ruleName + ".target")
+		AbstractRule.map(self, config, section, ruleName)
+		target = config.get(section, ruleName + ".target")
 		if target:
-			self._dnatDst = target
+			self._target = target
 
-        @classmethod
 	def iptablesRule(self):
 		target=""
                 prot=""
@@ -128,7 +120,7 @@ class FilterRule(AbstractRule):
                 if (self._dstIface):
 			dstIface = "-o %s" % self._dstIface
 
-                rule = "-t nat -j DNAT %s %s %s %s %s %s %s %s %s" % (prot, self.getMatchOpt(), srcIp, srcPort, srcIface, dstIp, dstPort, dstIface, target)
+                rule = "-t nat %s %s %s %s %s %s %s %s %s" % (prot, self.getMatchOpt(), srcIp, srcPort, srcIface, dstIp, dstPort, dstIface, target)
                 rule = re.sub(' +', ' ', rule)
 
                 return rule
@@ -138,15 +130,13 @@ class FilterRule(AbstractRule):
 class DnatRule(AbstractRule):
 	_chain="PREROUTING"
 	_dnatDst=""
-	
-        @classmethod
+
 	def map(self, config, section, ruleName):
-		AbstractRule.map(config, section, ruleName)
-		dst = config.has_option(section, ruleName + ".dnat.dst")
+		AbstractRule.map(self, config, section, ruleName)
+		dst = config.get(section, ruleName + ".dnat.dst")
 		if dst:
 			self._dnatDst = dst
 
-        @classmethod
 	def iptablesRule(self):
 		prot=""
 		srcIp=""
@@ -205,12 +195,11 @@ rules = []
 for section, ruleType in SECTIONS_CONFIG.iteritems():
 
 	rulesNames = parseRulesNames(config, section)
-
+	print "section: %s ; rules: %s" % (section, rulesNames)
 	for ruleName in rulesNames:
 		rule = ruleType()
 		rule.map(config, section, ruleName)
 		rules.append(rule)
-
 
 for rule in rules:
 	print rule.delIptablesRule()
