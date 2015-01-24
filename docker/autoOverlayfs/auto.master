@@ -1,0 +1,3 @@
+# autofs configuration
+/mnt/overlayfs/mnt	/etc/auto.overlayfs 	--timeout=120
+
