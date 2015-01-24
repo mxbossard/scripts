@@ -8,6 +8,8 @@ UPPER_DIR="/mnt/$FS_NAME/upper"
 WORK_DIR="/mnt/$FS_NAME/work"
 MOUNT_DIR="/mnt/$FS_NAME/aufs"
 
+mkdir $LOWER_DIR
+
 # Build all needed directories
 echo "building $NB_MOUNT directories ..."
 

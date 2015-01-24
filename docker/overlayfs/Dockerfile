@@ -8,8 +8,10 @@ COPY testOverlayfs.sh /root/testOverlayfs.sh
 
 RUN mkdir -p /mnt/base /mnt/aufs
 
+ENV NB_DIR 1000
+
 VOLUME ["/mnt/base", "/mnt/aufs"]
 
-CMD /root/testAufs.sh && /bin/bash
+CMD /root/testOverlayfs.sh && /bin/bash
 #CMD /bin/bash
 
