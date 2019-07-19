@@ -32,7 +32,6 @@ checkErrors() {
 }
 
 # Load list homepage
-#curl -f -sS "https://framalistes.org/sympa/review/$listName" -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'Referer: https://framalistes.org/sympa' -H "Cookie: $cookie" > $TMP_OUTPUT_FILE
 curl -f -sS "https://framalistes.org/sympa/review/$listName" --compressed -H "Cookie: $cookie" > $TMP_OUTPUT_FILE
 checkErrors
 
